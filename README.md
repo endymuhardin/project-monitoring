@@ -41,34 +41,45 @@ A comprehensive web-based application for monitoring student software developmen
 - Contact details management
 - Avatar/photo upload
 
-#### 1.4 Student Registration System
-- **Individual Student Registration**: Personal account creation with academic credentials
-- **Group Formation Interface**: Tools for students to create or join project groups
-- **Group Registration Workflow**: Complete group registration process for course enrollment
-- **Academic Validation**: Integration with institutional student information systems
-- **Group Management**: Tools for modifying group membership before project start
+#### 1.4 Student Registration System - Google Workspace Integration
+
+**Google for Education Single Sign-On (SSO):**
+- **Mandatory Google Workspace Authentication**: All students must use their @stmik.tazkia.ac.id Google account
+- **Active Session Requirement**: Registration only available with active Google sign-on session
+- **OAuth 2.0 Integration**: Secure authentication using Google OAuth 2.0 with Spring Security
+- **Domain Restriction**: Only @stmik.tazkia.ac.id domain accounts are permitted
+- **Automatic Profile Population**: Student information pulled from Google Workspace directory
+
+**Registration Security Features:**
+- **Domain Validation**: Automatic verification of stmik.tazkia.ac.id email domain
+- **Session Management**: Active Google session monitoring and timeout handling
+- **Multi-factor Authentication**: Leverages Google's 2FA if enabled on student accounts
+- **Account Linking Prevention**: One Google account per student, no duplicate registrations
+- **Audit Trail**: Complete logging of authentication and registration activities
 
 ### 2. Group Registration & Formation System
 
-#### 2.1 Student Group Registration Process
-**Pre-Registration Phase:**
-- **Individual Account Creation**: Students create personal accounts with academic credentials
-- **Profile Completion**: Required academic information (student ID, program, semester)
-- **Course Enrollment**: Selection of integrated project course from available offerings
+#### 2.1 Google-Authenticated Group Registration Process
 
-**Group Formation Workflow:**
-- **Group Creation**: Any registered student can initiate a new group
-- **Group Discovery**: Public listing of groups seeking members (with privacy controls)
-- **Invitation System**: Group creators can invite specific students via email or student ID
-- **Join Requests**: Students can request to join existing groups
-- **Group Chat**: Built-in messaging for coordination during formation phase
+**Google SSO Pre-Registration Phase:**
+- **Google Authentication Required**: Students must sign in using @stmik.tazkia.ac.id credentials
+- **Automatic Profile Import**: Google Workspace profile data automatically imported (name, email, photo)
+- **Course Enrollment Verification**: Integration with Google Classroom or manual course assignment
+- **Academic Information Validation**: Student ID and program verification against institutional records
 
-**Group Registration Requirements:**
-- **Team Size Validation**: Enforce 2-3 member limit per group
-- **Academic Eligibility**: All members must be enrolled in the same course section
-- **Skills Declaration**: Optional skills and interests sharing for balanced team formation
-- **Group Name & Description**: Unique group identifier and project interest description
-- **Contact Information**: Primary contact designation for instructor communication
+**Google-Integrated Group Formation Workflow:**
+- **Authenticated Group Creation**: Only Google-authenticated students can create groups
+- **Google Contacts Integration**: Group discovery using Google Workspace directory
+- **Email-Based Invitations**: Native integration with Gmail for group invitations
+- **Google Calendar Integration**: Automatic team meeting scheduling capabilities
+- **Google Drive Workspace**: Automatic creation of shared Google Drive folder for each group
+
+**Enhanced Group Registration Requirements:**
+- **Google Account Verification**: All group members must have verified @stmik.tazkia.ac.id accounts
+- **Team Size Validation**: Enforce 2-3 member limit with Google account verification
+- **Course Section Matching**: Automatic verification through Google Classroom integration
+- **Google Workspace Collaboration**: Shared Google Drive, Calendar, and Meet access
+- **Unified Communication**: Integration with Google Chat for team coordination
 
 #### 2.2 Group Management Features
 - **Member Role Assignment**: Designation of group leader and specialized roles
@@ -495,9 +506,16 @@ The system evaluates student projects against CMMI Dev 3.0's expanded maturity l
 - Java 21 - Latest LTS version with modern language features
 - Maven - Dependency management and build automation
 - Spring Boot 3.5 - Enterprise-grade application framework
-- Spring Security - Authentication and authorization
+- Spring Security with OAuth 2.0 - Google Workspace authentication integration
 - Spring Data JPA - Data access layer abstraction
 - Spring Web MVC - RESTful web services
+
+**Authentication & Security:**
+- Google OAuth 2.0 Client - Spring Boot native integration for Google authentication
+- Google Workspace Directory API - User profile and organizational data access
+- Domain Validation - @stmik.tazkia.ac.id domain restriction enforcement
+- JWT Token Management - Secure session handling with Google-issued tokens
+- CSRF Protection - Cross-site request forgery prevention with OAuth state parameters
 
 **Frontend & Templates:**
 - Thymeleaf with Layout Dialect - Server-side templating engine
@@ -578,6 +596,64 @@ The system evaluates student projects against CMMI Dev 3.0's expanded maturity l
 - **Spring Profiles Configuration**: Production-ready application properties
 - **Performance Testing**: Load testing with realistic academic workloads
 - **Documentation**: JavaDoc and user documentation completion
+
+### 10.3 Google Workspace OAuth 2.0 Configuration
+
+**Required Maven Dependencies:**
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-client</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
+
+**Application Properties Configuration:**
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+              - https://www.googleapis.com/auth/admin.directory.user.readonly
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+# Custom domain validation
+app:
+  security:
+    allowed-domain: stmik.tazkia.ac.id
+    redirect-after-login: /dashboard
+    session-timeout: 3600
+```
+
+**Spring Security Configuration Requirements:**
+- **Domain Validation Filter**: Custom filter to validate @stmik.tazkia.ac.id email domain
+- **OAuth 2.0 Success Handler**: Custom handler to populate user profile from Google Workspace
+- **Session Management**: Configure session timeout and concurrent session control
+- **CSRF Protection**: Enable CSRF protection with OAuth 2.0 state parameter validation
+- **Access Control**: Role-based access control with student/instructor roles
+
+**Google Workspace API Integration:**
+- **Directory API Setup**: Service account configuration for accessing organizational data
+- **User Profile Enrichment**: Automatic population of student information from directory
+- **Group Management**: Integration with Google Groups for team organization
+- **Calendar Integration**: Optional calendar integration for project milestone tracking
 
 ## Success Metrics
 
